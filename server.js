@@ -13,7 +13,7 @@ connectDB();
 const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "")
-  .split(",")
+  .split(/[\n,]/)
   .map((origin) => origin.trim())
   .filter(Boolean);
 

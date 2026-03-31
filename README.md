@@ -1,93 +1,101 @@
 # Talk-A-Tive Backend
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Work+Sans&weight=700&size=26&duration=2400&pause=900&color=FF8A00&center=true&vCenter=true&width=860&lines=Talk-A-Tive+Backend;Express+%2B+MongoDB+%2B+Socket.IO;Auth+%7C+Chats+%7C+Messages+%7C+Notifications" alt="Backend animated heading" />
-</p>
+Backend API for Talk-A-Tive chat app.
 
-Backend API and Socket.IO server for Talk-A-Tive.
-
-## Stack
+## Tech Stack
 
 - Node.js + Express
 - MongoDB + Mongoose
-- JWT auth
-- Socket.IO
+- JWT authentication
+- Socket.IO (local/non-serverless runtime)
+- Ably publish API (for serverless-friendly realtime fanout)
 
-## Prerequisites
-
-- Node.js installed
-- MongoDB connection string
-
-Recommended runtime for this project:
+## Recommended Runtime
 
 - Node 18
 
 ## Environment Variables
 
-Create file: backend/.env
+Create backend/.env:
 
 ```env
-MONGO_URI="your_mongodb_connection_string"
+MONGO_URI=your_mongodb_connection_string
 PORT=5000
-JWT_SECRET="your_secret"
-CORS_ORIGIN="http://localhost:3000,https://your-frontend.vercel.app"
+JWT_SECRET=your_secret
+
+# Comma-separated allowed origins
+CORS_ORIGIN=http://localhost:3000,https://your-frontend.vercel.app
+
+# Optional (recommended for Vercel/full realtime fanout)
+ABLY_API_KEY=your_ably_api_key
 ```
+
+Notes:
+
+- Keep values plain (no extra quotes unless required by your shell setup).
+- If deploying frontend and backend separately, add frontend URL in CORS_ORIGIN.
 
 ## Install
 
-From project root:
+From repository root:
 
 ```bash
 npm --prefix backend install --legacy-peer-deps
 ```
 
-Or inside backend folder:
+Or from backend directory:
 
 ```bash
 cd backend
 npm install --legacy-peer-deps
 ```
 
-## Run
+## Run Locally
 
-From project root:
+From repository root:
 
 ```bash
 npm --prefix backend run server
 ```
 
-Or inside backend folder:
+Or from backend directory:
 
 ```bash
 cd backend
 npm run server
 ```
 
-Backend URL:
+Default URL: http://localhost:5000
 
-- http://localhost:5000
+## Core API Areas
 
-## Main API Areas
-
-- User auth and profile
-- Chat creation and listing
-- Group chat management
+- User authentication and profile
+- Chat create/list/group update
 - Message send, edit, delete
-- Unread notifications and mark-as-read
+- Unread + read-sync APIs
+  - GET /api/message/unread
+  - PUT /api/message/read/:chatId
 
-## Notes
+## Realtime Behavior
 
-- Scripts are configured to run backend with Node 18 compatibility:
-  - start
-  - server
-- If PORT 5000 is already in use, stop existing process and rerun.
+- Local/traditional server runtime:
+  - Socket.IO events are active.
+- Serverless runtime (for example Vercel):
+  - Socket server is not persisted.
+  - Backend publishes message/notification events via Ably when ABLY_API_KEY is configured.
 
-## Quick Troubleshooting
+## Deployment Notes
 
-- MongoDB connection error:
-  - verify MONGO_URI in backend/.env
-- JWT/auth error:
-  - verify JWT_SECRET in backend/.env
-- Module not found:
-  - run install again in backend
+- Vercel entry is wired via backend/api/index.js and backend/vercel.json.
+- Ensure all required env vars are set in Vercel project settings.
+- If client sees CORS errors, re-check CORS_ORIGIN values.
+
+## Troubleshooting
+
+- Mongo connection fails:
+  - Verify MONGO_URI and network access to MongoDB.
+- 401/auth issues:
+  - Verify JWT_SECRET and token flow.
+- Realtime delay in serverless:
+  - Set ABLY_API_KEY and ensure frontend has matching REACT_APP_ABLY_KEY.
 

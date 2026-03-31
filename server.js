@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
@@ -11,12 +12,32 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 connectDB();
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = allowedOrigins.length
+  ? {
+      origin: (origin, callback) => {
+        // Allow same-origin/server-to-server requests without an Origin header.
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+      },
+      credentials: true,
+    }
+  : {};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.use(express.json({ limit: "5mb" })); // increased limit for Base64 media uploads
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
-// app.get("/", (req, res) => {
-//   res.send("API Running!");
-// });
+app.get("/", (req, res) => {
+  res.send("API Running!");
+});
 
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
@@ -54,11 +75,15 @@ if (!isVercelRuntime) {
     console.log(`Server running on PORT ${PORT}...`.yellow.bold)
   );
 
+  const socketCorsOrigin = allowedOrigins.length
+    ? allowedOrigins
+    : ["http://localhost:3000"];
+
   const io = require("socket.io")(server, {
     pingTimeout: 60000,
     cors: {
-      origin: "http://localhost:3000",
-      // credentials: true,
+      origin: socketCorsOrigin,
+      credentials: true,
     },
   });
 

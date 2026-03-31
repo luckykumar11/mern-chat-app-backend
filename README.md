@@ -30,6 +30,7 @@ Create file: backend/.env
 MONGO_URI="your_mongodb_connection_string"
 PORT=5000
 JWT_SECRET="your_secret"
+CORS_ORIGIN="http://localhost:3000,https://your-frontend.vercel.app"
 ```
 
 ## Install

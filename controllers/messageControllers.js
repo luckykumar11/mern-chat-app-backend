@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Message = require("../models/messageModel");
 const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
+const { publishAblyEvent } = require("../config/ably");
 
 //@description     Get all Messages
 //@route           GET /api/Message/:chatId
@@ -51,6 +52,24 @@ const sendMessage = asyncHandler(async (req, res) => {
     });
 
     await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message });
+
+    const publishTasks = [];
+
+    publishTasks.push(
+      publishAblyEvent(`chat-${req.body.chatId}`, "new-message", message)
+    );
+
+    const recipientIds = (message.chat?.users || [])
+      .map((chatUser) => chatUser?._id?.toString())
+      .filter((id) => id && id !== req.user._id.toString());
+
+    recipientIds.forEach((recipientId) => {
+      publishTasks.push(
+        publishAblyEvent(`user-${recipientId}`, "notification", message)
+      );
+    });
+
+    await Promise.allSettled(publishTasks);
 
     res.json(message);
   } catch (error) {

@@ -69,9 +69,10 @@ const sendMessage = asyncHandler(async (req, res) => {
       );
     });
 
-    await Promise.allSettled(publishTasks);
-
     res.json(message);
+
+    // Realtime fanout should never delay API response.
+    Promise.allSettled(publishTasks).catch(() => {});
   } catch (error) {
     res.status(400);
     throw new Error(error.message);
